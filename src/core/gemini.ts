@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '');
 
-// 콘텐츠 생성용 모델 (gemini-2.5-flash-lite Verified)
+// 콘텐츠 생성용 모델
 const contentModel = genAI.getGenerativeModel({
     model: 'gemini-2.5-flash-lite'
 });
@@ -24,45 +24,64 @@ export async function generateContent(prompt: string): Promise<string> {
 
 /**
  * 야구 커뮤니티 글 생성
- * - 감정(Emotion): 화내거나, 기뻐하거나, 비꼬기
- * - 경험(Experience): 1인칭 가짜 경험 주입
- * - 스타일: 초성체, 제목 낚시, 비속어(필터링 범위 내)
  */
 export async function generateBaseballPost(
-    persona: { nickname: string; traits: string },
+    persona: { nickname: string; traits: string; role?: string },
     topic: string,
     sourceInfo?: { title?: string; url?: string; summary?: string }
 ): Promise<{ title: string; content: string }> {
-    const prompt = `당신은 "${persona.nickname}"이라는 야구 커뮤니티 유저입니다.
-성격 특성: ${persona.traits}
 
-다음 주제로 야구 커뮤니티에 올릴 글을 작성하세요:
+    // 역할별 스타일 가이드
+    let styleGuide = "";
+    if (persona.role === 'expert') {
+        styleGuide = `
+        - 전문가답게 분석적이고 논리적인 말투 사용 (~합니다, ~것으로 보임)
+        - 이모지 사용 절제 (거의 쓰지 말 것, 1개 이하)
+        - 데이터나 근거를 들어 설명
+        - 점잖은 문체 유지`;
+    } else if (persona.role === 'troll') {
+        styleGuide = `
+        - 아주 냉소적(비꼬기)이거나 과도하게 낙관적인(행복회로) 태도 유지
+        - 반말 필수, 약간 공격적이거나 우기는 말투
+        - 이모지는 😑, 🤷‍♂️, 👎, 🤮 같은 부정적인 것 위주로 사용하거나 아예 안 쓰기
+        - "ㅉㅉ", "답도 없다" 같은 표현 사용`;
+    } else { // fan
+        styleGuide = `
+        - 야구 커뮤니티 찐팬 말투 (반말 기본)
+        - 감정 표현 확실하게 (기쁨, 분노, 슬픔)
+        - 적절한 이모지 사용 (🔥, ⚾, ㅠㅠ, ㅋㅋ) 허용하되 문장마다 도배 금지
+        - 초성체(ㅋㅋㅋ, ㄹㅇ) 자연스럽게 섞기`;
+    }
+
+    const prompt = `당신은 "${persona.nickname}"이라는 KBO 야구 커뮤니티 유저입니다.
+성격: ${persona.traits}
+역할: ${persona.role || 'fan'}
+
+다음 주제로 글을 작성하세요:
 주제: ${topic}
 ${sourceInfo ? `
 참고 정보:
 - 제목: ${sourceInfo.title || '없음'}
-- 출처: ${sourceInfo.url || '없음'}
 - 요약: ${sourceInfo.summary || '없음'}
 ` : ''}
 
-작성 규칙:
-1. 기계적인 요약 금지! 감정을 넣어라 (화나거나, 기쁘거나, 비꼬거나)
-2. 1인칭 경험을 넣어라 (예: "직관 갔다 왔는데", "방금 치킨 시키고 봤는데")
-3. 한국 야구 커뮤니티 스타일로 (초성체 ㅋㅋㅋ, ㄹㅇ, ㅇㅈ 등 자연스럽게 사용)
-4. 제목은 클릭하고 싶게 낚시성으로 작성
-5. 내용은 100~300자 정도로 짧고 임팩트 있게
+[작성 스타일 가이드 - 반드시 준수!]
+${styleGuide}
 
-JSON 형식으로만 응답하세요:
-{"title": "제목", "content": "본문내용"}`;
+[공통 규칙]
+1. 제목은 클릭 유발하도록 작성 (궁금증 유발)
+2. 내용은 100~300자 정도
+3. 사람처럼 보이게 작성 (AI 티 내지 말 것)
+
+JSON 형식으로만 응답:
+{"title": "제목", "content": "내용"}`;
 
     const response = await generateContent(prompt);
 
     try {
-        // JSON 파싱 (코드블록 제거)
         const cleanJson = response.replace(/```json\n?|\n?```/g, '').trim();
         return JSON.parse(cleanJson);
     } catch {
-        // 파싱 실패시 기본값
         return {
             title: topic.slice(0, 50),
             content: response
@@ -145,7 +164,7 @@ JSON 배열로만 응답:
 }
 
 /**
- * 일상 글 주제 생성 (뉴스 없을 때)
+ * 일상 글 주제 생성
  */
 export async function generateDailyTopic(): Promise<string> {
     const topics = [
@@ -156,10 +175,7 @@ export async function generateDailyTopic(): Promise<string> {
         '최근에 산 야구 굿즈 자랑',
         '직관 가는 길에 찍은 사진',
         '오늘 선발 어떻게 생각함?',
-        '응원가 연습 중입니다',
-        '야구장 맛집 추천해주세요',
-        '내일 티켓팅 성공할 수 있을까요'
+        '응원가 연습 중입니다'
     ];
-
     return topics[Math.floor(Math.random() * topics.length)];
 }
