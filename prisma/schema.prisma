@@ -1,0 +1,141 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // 배포 시 postgresql로 변경
+  url      = env("DATABASE_URL")
+}
+
+// 1. 카테고리 (고정값: news, analysis, gossip, debate)
+model Category {
+  slug  String @id
+  name  String
+  posts Post[]
+}
+
+// 2. AI 페르소나 (시스템 봇 포함)
+model Persona {
+  id        String   @id @default(uuid())
+  nickname  String   @unique
+  avatarUrl String?
+  role      String   // expert, fan, troll, system
+  traits    String   // 프롬프트용 성격 키워드
+
+  posts      Post[]
+  comments   Comment[]
+  debateMsgs DebateMessage[]
+
+  createdAt DateTime @default(now())
+}
+
+// 3. 익명 유저 (게스트)
+model Guest {
+  id             String  @id @default(uuid())
+  sessionKeyHash String  @unique // 보안: 세션 해시
+  nickname       String
+  passwordHash   String? // 글 수정용
+  ipHash         String? // 차단용
+
+  posts    Post[]
+  comments Comment[]
+  votes    PostVote[]
+  views    PostView[]
+
+  createdAt DateTime @default(now())
+}
+
+// 4. 게시글 (통합 모델)
+// PostType: NORMAL, DEBATE (String으로 저장)
+// PostSourceType: NONE, KBO_NEWS, YOUTUBE_VIDEO, HISTORY_EVENT (String으로 저장)
+
+model Post {
+  id          String  @id @default(uuid())
+  title       String
+  type        String  @default("NORMAL") // NORMAL, DEBATE
+  content     String? // 본문 (HTML/Markdown)
+  summaryJson String? // 토론/리스트용 요약 데이터
+
+  // 외부 소스 메타데이터
+  sourceType     String  @default("NONE") // NONE, KBO_NEWS, YOUTUBE_VIDEO, HISTORY_EVENT
+  sourceUrl      String?
+  sourceProvider String?
+  sourceTitle    String?
+  sourceVideoId  String?
+
+  // 지표 (실측 및 계산)
+  viewCount     Int   @default(0)
+  likeCount     Int   @default(0)
+  commentCount  Int   @default(0)
+  trendingScore Float @default(0) // 정렬 기준 (알고리즘)
+
+  // 작성자 (App 레벨에서 XOR 검증)
+  personaId String?
+  persona   Persona? @relation(fields: [personaId], references: [id])
+  guestId   String?
+  guest     Guest?   @relation(fields: [guestId], references: [id])
+
+  categorySlug String
+  category     Category @relation(fields: [categorySlug], references: [slug])
+
+  comments   Comment[]
+  debateMsgs DebateMessage[]
+  votes      PostVote[]
+  views      PostView[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([trendingScore, createdAt])
+  @@index([categorySlug, createdAt])
+  @@index([sourceUrl]) // 중복 수집 방지
+}
+
+// 5. 전문가 토론 메시지
+model DebateMessage {
+  id        String  @id @default(uuid())
+  order     Int
+  content   String
+  postId    String
+  post      Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  speakerId String
+  speaker   Persona @relation(fields: [speakerId], references: [id])
+
+  @@unique([postId, order])
+}
+
+// 6. 댓글
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  personaId String?
+  persona   Persona? @relation(fields: [personaId], references: [id])
+  guestId   String?
+  guest     Guest?   @relation(fields: [guestId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// 7. 실측 데이터 (중복 방지)
+model PostVote {
+  id      String @id @default(uuid())
+  postId  String
+  guestId String
+  post    Post   @relation(fields: [postId], references: [id])
+  guest   Guest  @relation(fields: [guestId], references: [id])
+
+  @@unique([postId, guestId])
+}
+
+model PostView {
+  id              String   @id @default(uuid())
+  postId          String
+  guestId         String?
+  fingerprintHash String?  // 비로그인 식별용
+  post            Post     @relation(fields: [postId], references: [id])
+  guest           Guest?   @relation(fields: [guestId], references: [id])
+  createdAt       DateTime @default(now())
+}
