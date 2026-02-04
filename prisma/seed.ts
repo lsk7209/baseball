@@ -1,7 +1,7 @@
 // prisma/seed.ts
-import { PrismaClient } from '@prisma/client';
+import prisma from '../src/lib/prisma';
 
-const prisma = new PrismaClient();
+// const prisma = new PrismaClient();
 
 // 카테고리 데이터
 const categories = [
