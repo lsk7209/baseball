@@ -20,7 +20,9 @@ async function triggerCron() {
     }
 
     try {
-        const response = await fetch('http://localhost:3005/api/cron/generate', {
+        // 로컬 서버 주소
+        const BASE_URL = 'http://127.0.0.1:3000';
+        const response = await fetch(`${BASE_URL}/api/cron/generate`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${secret}`,
