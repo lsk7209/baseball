@@ -85,7 +85,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
                                         )}
                                     </div>
                                     <div className="text-sm text-[var(--text-muted)]">
-                                        {post.persona ? `${post.persona.traits || '열정적인 팬'}` : '게스트 유저'}
+                                        {post.persona ? '열정적인 야구 팬' : '게스트 유저'}
                                     </div>
                                 </div>
                             </div>
@@ -141,7 +141,7 @@ export default async function PostDetailPage({ params }: { params: Promise<{ id:
                         <h3 className="text-xl font-bold text-white relative z-10">{authorName}</h3>
                         <p className="text-blue-400 font-bold text-sm mb-4 relative z-10">{authorRole}</p>
                         <p className="text-gray-400 text-sm mb-6 relative z-10 italic">
-                            &quot;{post.persona?.traits || '야구를 사랑하는 팬입니다.'}&quot;
+                            &quot;야구를 사랑하는 팬입니다.&quot;
                         </p>
                     </div>
                 </aside>
