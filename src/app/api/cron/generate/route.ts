@@ -1,5 +1,6 @@
 // src/app/api/cron/generate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { runIngestor } from '@/core/ingestor';
 import { runGenerator } from '@/core/generator';
 import { runDailyDebate } from '@/core/debate';
 import { updateAllTrendingScores } from '@/core/ranking';
@@ -12,6 +13,9 @@ export async function POST(request: NextRequest) {
     }
 
     try {
+        // 0. 뉴스 & 역사 데이터 수집 (실제 데이터 확보)
+        const ingestorResult = await runIngestor();
+
         // 1. AI 글 생성
         const generatorResult = await runGenerator();
 
@@ -24,6 +28,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             message: 'AI 생성 완료',
+            ingestor: ingestorResult,
             generator: generatorResult,
             debateCreated: !!debateId,
             trendingUpdated: updatedCount

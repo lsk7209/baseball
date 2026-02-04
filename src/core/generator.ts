@@ -27,7 +27,7 @@ export async function generateNewsReaction(newsPostId: string): Promise<string |
 
     // AI로 글 생성
     const generated = await generateBaseballPost(
-        { nickname: persona.nickname, traits: persona.traits },
+        { nickname: persona.nickname, traits: persona.traits, role: persona.role },
         newsPost.title,
         {
             title: newsPost.sourceTitle || newsPost.title,
@@ -68,7 +68,7 @@ export async function generateDailyPost(): Promise<string | null> {
 
     // AI로 글 생성
     const generated = await generateBaseballPost(
-        { nickname: persona.nickname, traits: persona.traits },
+        { nickname: persona.nickname, traits: persona.traits, role: persona.role },
         topic
     );
 

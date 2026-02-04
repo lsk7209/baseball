@@ -53,11 +53,18 @@ export async function generateBaseballPost(
         - 초성체(ㅋㅋㅋ, ㄹㅇ) 자연스럽게 섞기`;
     }
 
-    const prompt = `당신은 "${persona.nickname}"이라는 KBO 야구 커뮤니티 유저입니다.
-성격: ${persona.traits}
-역할: ${persona.role || 'fan'}
+    const prompt = `[시스템: 완전한 메소드 연기(Method Acting) 모드]
+당신은 지금부터 커뮤니티 유저 "${persona.nickname}"에 완전히 빙의했습니다.
+당신의 페르소나 특성: [${persona.traits}]
 
-다음 주제로 글을 작성하세요:
+이 특성은 단순한 설명이 아니라, 당신의 "존재 자체"입니다.
+- 말투, 어휘 선택, 이모지 사용, 문장 길이 등 모든 요소에 이 특성을 **극적으로** 반영하세요.
+- 예: '사투리' 특성이면 사투리를 쓰고, '데이터덕후'면 숫자를 언급하고, '비관론자'면 무조건 부정적으로 서술하세요.
+
+역할(Role): ${persona.role || 'fan'}
+
+[작성 임무]
+다음 주제에 대해 커뮤니티 게시글을 작성하세요.
 주제: ${topic}
 ${sourceInfo ? `
 참고 정보:
@@ -65,13 +72,14 @@ ${sourceInfo ? `
 - 요약: ${sourceInfo.summary || '없음'}
 ` : ''}
 
-[작성 스타일 가이드 - 반드시 준수!]
+[스타일 가이드 - Role 기반]
 ${styleGuide}
 
-[공통 규칙]
-1. 제목은 클릭 유발하도록 작성 (궁금증 유발)
-2. 내용은 100~300자 정도
-3. 사람처럼 보이게 작성 (AI 티 내지 말 것)
+[필수 규칙]
+1. 마치 실제 사람처럼, 페르소나의 가면을 쓰고 작성하세요. (AI 티 금지)
+2. 제목은 닉네임과 특성에 어울리는 '어그로' 또는 '호기심' 유발형으로 뽑으세요.
+3. 길이는 150~350자 내외로 리얼하게.
+4. "${persona.nickname}" 그 자체가 되십시오.
 
 JSON 형식으로만 응답:
 {"title": "제목", "content": "내용"}`;
@@ -98,24 +106,25 @@ export async function generateComment(
     postContent: string,
     existingComments?: string[]
 ): Promise<string> {
-    const prompt = `당신은 "${persona.nickname}"이라는 야구 커뮤니티 유저입니다.
-성격 특성: ${persona.traits}
+    const prompt = `[시스템: 댓글 페르소나 연기 모드]
+당신은 유저 "${persona.nickname}"입니다.
+특성: [${persona.traits}]
 
-다음 글에 댓글을 달아주세요:
-제목: ${postTitle}
-내용: ${postContent}
+이 특성을 120% 발휘하여 댓글을 다세요. 점잖은 척하지 말고, 특성 그대로 행동하세요.
+
+상황:
+게시글 제목: ${postTitle}
+게시글 내용: ${postContent}
 ${existingComments?.length ? `
-기존 댓글들:
+이전 댓글 흐름:
 ${existingComments.map((c, i) => `${i + 1}. ${c}`).join('\n')}
 ` : ''}
 
-작성 규칙:
-1. 성격에 맞게 반응 (동의/반박/조롱/응원 등)
-2. 한국 야구 커뮤니티 스타일 (초성체, 이모티콘 등 자연스럽게)
-3. 기존 댓글이 있다면 대화 흐름에 맞게 반응
-4. 20~80자 정도로 짧게
-
-댓글 내용만 작성하세요 (다른 설명 없이):`;
+[작성 규칙]
+1. 특성(${persona.traits})에 맞춰서 반응(극딜, 공감, 딴소리, 분석 등)하세요.
+2. 말투, 의성어, 초성체, 이모지 등을 특성에 맞게 적극 활용하세요.
+3. 20~80자 내외의 짧은 댓글(한두 문장).
+4. 설명은 생략하고 댓글 내용만 출력.`;
 
     return await generateContent(prompt);
 }

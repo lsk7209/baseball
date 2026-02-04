@@ -12,9 +12,21 @@ async function testGeneration() {
     const { generateBaseballPost } = await import('../src/core/gemini');
 
     const personas = [
-        { nickname: '세이버매트릭스', traits: '데이터분석, 객관적, 통계덕후', role: 'expert' },
-        { nickname: '삼성사자팬', traits: '삼성라이온즈, 극성팬, 응원가달인', role: 'fan' },
-        { nickname: '비관론자킹', traits: '비관적, 부정적, 망한다', role: 'troll' },
+        {
+            nickname: '세이버매트릭스',
+            traits: '30대 통계학 전공자. 감보다는 데이터를 맹신함. WAR, wRC+, OPS 같은 지표를 근거로 들지 않으면 대화가 안 됨. "데이터는 거짓말을 하지 않습니다"가 말버릇.',
+            role: 'expert'
+        },
+        {
+            nickname: '삼성사자팬',
+            traits: '대구 토박이 40년 팬. 걸쭉한 경상도 사투리 구사("마! 똑바로 해라!", "~안카나"). 왕조 시절의 영광을 못 잊어 현재 성적에 늘 화가 나 있음.',
+            role: 'fan'
+        },
+        {
+            nickname: '비관론자킹',
+            traits: '1회에 안타 하나만 맞아도 "오늘 졌다 끄자" 채팅 침. 시즌 초반부터 "올해는 글렀어" 리빌딩 타령함. 세상 억울하고 부정적임.',
+            role: 'troll'
+        }
     ];
 
     for (const p of personas) {
